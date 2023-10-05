@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model client_profile {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at              DateTime                  @default(now()) @db.Timestamp(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamp(6)
+  user_id                 String                    @db.Uuid
+  name_pharmacy           String                    @unique @db.VarChar(255)
+  user                    user                      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form_a                  form_a?
+  form_b                  form_b[]
+  form_c                  form_c[]
+  order_current           order_current[]
+  order_history_pharmacie order_history_pharmacie[]
+}
+
+model form_a {
+  id                                            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                    DateTime               @default(now()) @db.Timestamp(6)
+  updated_at                                    DateTime               @default(now()) @db.Timestamp(6)
+  name_pharmacy                                 String                 @unique @db.Uuid
+  user_id                                       String                 @db.Uuid
+  submission_date                               DateTime               @db.Timestamp(6)
+  order_id                                      String?                @db.Uuid
+  sex                                           String?                @db.VarChar(255)
+  name_patient                                  String?
+  medication_details                            String?
+  client_profile                                client_profile         @relation(fields: [name_pharmacy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_form_a_order_idToorder_current  order_current?         @relation("form_a_order_idToorder_current", fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                                          user                   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form_b_form_b_name_patientToform_a            form_b[]               @relation("form_b_name_patientToform_a")
+  form_b_form_b_sexToform_a                     form_b[]               @relation("form_b_sexToform_a")
+  form_c                                        form_c[]
+  order_current_order_current_form_a_idToform_a order_current[]        @relation("order_current_form_a_idToform_a")
+  order_history_client                          order_history_client[]
+  pdf_file                                      pdf_file[]
+}
+
+model form_b {
+  id                                            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                    DateTime        @default(now()) @db.Timestamp(6)
+  updated_at                                    DateTime        @default(now()) @db.Timestamp(6)
+  name_pharmacy                                 String          @db.Uuid
+  user_id                                       String          @db.Uuid
+  name_patient                                  String?         @db.Uuid
+  sex                                           String?         @db.Uuid
+  submission_date                               DateTime        @db.Timestamp(6)
+  forme_pharmaceutique                          Boolean
+  modalite_d_administration                     String
+  decision_sous_traiter_preparation             Boolean
+  order_id                                      String          @db.Uuid
+  decision_realiser_preparation                 Boolean
+  form_a_form_b_name_patientToform_a            form_a?         @relation("form_b_name_patientToform_a", fields: [name_patient], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  client_profile                                client_profile  @relation(fields: [name_pharmacy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_form_b_order_idToorder_current  order_current   @relation("form_b_order_idToorder_current", fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form_a_form_b_sexToform_a                     form_a?         @relation("form_b_sexToform_a", fields: [sex], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                                          user            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_current_form_b_idToform_b order_current[] @relation("order_current_form_b_idToform_b")
+}
+
+model form_c {
+  id                                            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                    DateTime        @default(now()) @db.Timestamp(6)
+  updated_at                                    DateTime        @default(now()) @db.Timestamp(6)
+  user_id                                       String          @db.Uuid
+  name_pharmacy                                 String          @db.Uuid
+  order_id                                      String          @db.Uuid
+  name_patient                                  String?         @db.Uuid
+  controle_elements_disponible                  Boolean
+  controle_pharmacotechniques                   Boolean
+  decision_liberation                           Boolean
+  form_a                                        form_a?         @relation(fields: [name_patient], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  client_profile                                client_profile  @relation(fields: [name_pharmacy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_form_c_order_idToorder_current  order_current   @relation("form_c_order_idToorder_current", fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                                          user            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_current_form_c_idToform_c order_current[] @relation("order_current_form_c_idToform_c")
+}
+
+model order_current {
+  id                                                                              String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                                                      DateTime                  @default(now()) @db.Timestamp(6)
+  updated_at                                                                      DateTime                  @default(now()) @db.Timestamp(6)
+  order_date                                                                      DateTime                  @default(now()) @db.Timestamp(6)
+  total_price                                                                     Float
+  user_id                                                                         String                    @db.Uuid
+  name_pharmacy                                                                   String?                   @db.Uuid
+  form_a_id                                                                       String                    @db.Uuid
+  form_b_id                                                                       String?                   @db.Uuid
+  confirmation_order                                                              Boolean?
+  form_c_id                                                                       String?                   @db.Uuid
+  delivery_order                                                                  Boolean?
+  form_a_pdf_path                                                                 String?
+  form_b_pdf_path                                                                 String?
+  form_c_pdf_path                                                                 String?
+  form_a_form_a_order_idToorder_current                                           form_a[]                  @relation("form_a_order_idToorder_current")
+  form_b_form_b_order_idToorder_current                                           form_b[]                  @relation("form_b_order_idToorder_current")
+  form_c_form_c_order_idToorder_current                                           form_c[]                  @relation("form_c_order_idToorder_current")
+  form_a_order_current_form_a_idToform_a                                          form_a                    @relation("order_current_form_a_idToform_a", fields: [form_a_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form_b_order_current_form_b_idToform_b                                          form_b?                   @relation("order_current_form_b_idToform_b", fields: [form_b_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  form_c_order_current_form_c_idToform_c                                          form_c?                   @relation("order_current_form_c_idToform_c", fields: [form_c_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  client_profile                                                                  client_profile?           @relation(fields: [name_pharmacy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                                                                            user                      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_history_client_order_history_client_order_created_atToorder_current       order_history_client[]    @relation("order_history_client_order_created_atToorder_current")
+  order_history_client_order_history_client_order_idToorder_current               order_history_client[]    @relation("order_history_client_order_idToorder_current")
+  order_history_client_order_history_client_order_statutToorder_current           order_history_client[]    @relation("order_history_client_order_statutToorder_current")
+  order_history_client_order_history_client_total_priceToorder_current            order_history_client[]    @relation("order_history_client_total_priceToorder_current")
+  order_history_pharmacie_order_history_pharmacie_order_created_atToorder_current order_history_pharmacie[] @relation("order_history_pharmacie_order_created_atToorder_current")
+  order_history_pharmacie_order_history_pharmacie_order_idToorder_current         order_history_pharmacie[] @relation("order_history_pharmacie_order_idToorder_current")
+  order_history_pharmacie_order_history_pharmacie_order_statutToorder_current     order_history_pharmacie[] @relation("order_history_pharmacie_order_statutToorder_current")
+  order_history_pharmacie_order_history_pharmacie_total_priceToorder_current      order_history_pharmacie[] @relation("order_history_pharmacie_total_priceToorder_current")
+}
+
+model order_history_client {
+  id                                                                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                                         DateTime       @default(now()) @db.Timestamp(6)
+  updated_at                                                         DateTime       @default(now()) @db.Timestamp(6)
+  order_id                                                           String         @db.Uuid
+  order_statut                                                       String         @db.Uuid
+  order_created_at                                                   String         @db.Uuid
+  name_patient                                                       String?        @db.Uuid
+  total_price                                                        String?        @db.Uuid
+  form_a                                                             form_a?        @relation(fields: [name_patient], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_client_order_created_atToorder_current order_current  @relation("order_history_client_order_created_atToorder_current", fields: [order_created_at], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_client_order_idToorder_current         order_current  @relation("order_history_client_order_idToorder_current", fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_client_order_statutToorder_current     order_current  @relation("order_history_client_order_statutToorder_current", fields: [order_statut], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_client_total_priceToorder_current      order_current? @relation("order_history_client_total_priceToorder_current", fields: [total_price], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model order_history_pharmacie {
+  id                                                                    String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                                            DateTime       @default(now()) @db.Timestamp(6)
+  updated_at                                                            DateTime       @default(now()) @db.Timestamp(6)
+  user_id                                                               String?        @db.Uuid
+  name_pharmacy                                                         String         @db.Uuid
+  order_id                                                              String         @db.Uuid
+  order_statut                                                          String         @db.Uuid
+  order_created_at                                                      String         @db.Uuid
+  total_price                                                           String?        @db.Uuid
+  client_profile                                                        client_profile @relation(fields: [name_pharmacy], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_pharmacie_order_created_atToorder_current order_current  @relation("order_history_pharmacie_order_created_atToorder_current", fields: [order_created_at], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_pharmacie_order_idToorder_current         order_current  @relation("order_history_pharmacie_order_idToorder_current", fields: [order_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_pharmacie_order_statutToorder_current     order_current  @relation("order_history_pharmacie_order_statutToorder_current", fields: [order_statut], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  order_current_order_history_pharmacie_total_priceToorder_current      order_current? @relation("order_history_pharmacie_total_priceToorder_current", fields: [total_price], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                                                                  user?          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model pdf_file {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at      DateTime @default(now()) @db.Timestamp(6)
+  updated_at      DateTime @default(now()) @db.Timestamp(6)
+  file_name       String   @db.VarChar(255)
+  associated_form String   @db.Uuid
+  form_a          form_a   @relation(fields: [associated_form], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model pharmacy {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description String?  @db.VarChar(255)
+  name        String   @db.VarChar(255)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  user_id     String   @db.Uuid
+  tenant_id   String   @db.VarChar(255)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                   String                    @unique @db.VarChar(255)
+  firstName               String?                   @db.VarChar(255)
+  lastName                String?                   @db.VarChar(255)
+  roq_user_id             String                    @db.VarChar(255)
+  tenant_id               String                    @db.VarChar(255)
+  created_at              DateTime                  @default(now()) @db.Timestamp(6)
+  updated_at              DateTime                  @default(now()) @db.Timestamp(6)
+  client_profile          client_profile[]
+  form_a                  form_a[]
+  form_b                  form_b[]
+  form_c                  form_c[]
+  order_current           order_current[]
+  order_history_pharmacie order_history_pharmacie[]
+  pharmacy                pharmacy[]
+}
